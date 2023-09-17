@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 teste
 
+=======
+Testando
+>>>>>>> f3c0176 (ADD Novos arquivos adicionados "hosts" e "shadow")
