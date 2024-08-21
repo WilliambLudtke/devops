@@ -2,7 +2,11 @@ import csv
 import requests
 import json
 
-# Função para fazer uma requisição à API do Zabbix
+# Configurações do Zabbix
+zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'
+username = 'Admin'
+password = 'zabbix'
+
 def zabbix_request(method, params, auth_token=None):
     headers = {'Content-Type': 'application/json'}
     payload = {
@@ -22,11 +26,6 @@ def read_csv(file_path):
             yield row
 
 try:
-    # Configurações do Zabbix
-    zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'
-    username = 'Admin'
-    password = 'zabbix'
-
     # Solicitar o ID do hostgroup do usuário
     hostgroup_id = input("Digite o ID do hostgroup do Zabbix: ")
 
@@ -71,4 +70,50 @@ try:
                 }, auth_token)
 
             elif so_or_network.lower() == 'ativo de rede':
-                # Criar host para Ativo de Rede 
+                # Criar host para Ativo de Rede com os detalhes adicionais
+                host_create_response = zabbix_request('host.create', {
+                    'host': host_name,
+                    'status': 1,
+                    'interfaces': [{
+                        "type": 2,
+                        "main": 1,
+                        "useip": 1,
+                        "ip": ip_address,
+                        "dns": "",
+                        "port": "161",
+                        "details": {
+                            "version": 2,
+                            "bulk": 0,
+                            "community": "public"
+                        }
+                    }],
+                    'groups': [{"groupid": hostgroup_id}],
+                    'templates': [{"templateid": template_id}],
+                    'description': description
+                }, auth_token)
+
+            if 'result' in host_create_response:
+                print(f"""
+                Host criado: {host_name},
+                IP Atribuído: {ip_address},
+                Descrição: {description},
+                SO ou Ativo de Rede: {so_or_network}""")
+            else:
+                print(f"Erro ao criar host {host_name}: {host_create_response}")
+
+        except Exception as e:
+            print(f"Erro ao criar host {host_name}: {e}")
+            contador -= 1
+
+    print(f"Número de novos Hosts criados: {contador}")
+
+except Exception as e:
+    print(f"Erro geral: {e}")
+
+finally:
+    # Logout após criar os hosts
+    logout_response = zabbix_request('user.logout', {}, auth_token)
+    if 'result' in logout_response:
+        print("Logout realizado com sucesso.")
+    else:
+        print(f"Erro ao fazer logout: {logout_response}")
