@@ -57,7 +57,9 @@ def authenticate_zabbix(user, password):
 
 try:
     # Autenticar e obter o token
-    auth_token = authenticate_zabbix('Admin', 'zabbix')  # Substitua pelo seu nome de usuário e senha
+    username = 'Admin'  # Substitua pelo seu nome de usuário
+    password = 'zabbix'  # Substitua pela sua senha
+    auth_token = authenticate_zabbix(username, password)
     if not auth_token:
         raise Exception("Não foi possível autenticar. Verifique as credenciais e a API do Zabbix.")
 
