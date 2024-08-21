@@ -3,7 +3,7 @@ import requests
 import json
 
 # Configurações do Zabbix
-zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'
+zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Use 'https' se o servidor suportar HTTPS
 auth_token = 'seu_token_aqui'  # Substitua pelo seu token de autenticação
 
 def zabbix_request(method, params):
@@ -16,7 +16,7 @@ def zabbix_request(method, params):
         'id': 1
     }
     try:
-        response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload))
+        response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
         response_data = response.json()
         if 'error' in response_data:
