@@ -3,7 +3,7 @@ import requests
 import json
 
 # Configurações do Zabbix
-zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Use 'https' se o servidor suportar HTTPS
+zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Substitua pelo URL do seu servidor Zabbix
 
 def zabbix_request(method, params, auth_token=None):
     headers = {'Content-Type': 'application/json'}
@@ -43,11 +43,11 @@ def read_csv(file_path):
     except Exception as e:
         print(f"Erro ao ler o arquivo CSV: {e}")
 
-def authenticate_zabbix():
+def authenticate_zabbix(user, password):
     # Requisição de autenticação para obter o token
     auth_response = zabbix_request('user.login', {
-        'user': 'Admin',  # Substitua pelo seu nome de usuário
-        'password': 'zabbix'  # Substitua pela sua senha
+        'user': user,
+        'password': password
     })
     if auth_response and 'result' in auth_response:
         return auth_response['result']
@@ -57,7 +57,7 @@ def authenticate_zabbix():
 
 try:
     # Autenticar e obter o token
-    auth_token = authenticate_zabbix()
+    auth_token = authenticate_zabbix('Admin', 'zabbix')  # Substitua pelo seu nome de usuário e senha
     if not auth_token:
         raise Exception("Não foi possível autenticar. Verifique as credenciais e a API do Zabbix.")
 
