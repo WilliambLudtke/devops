@@ -4,10 +4,9 @@ import json
 
 # Configurações do Zabbix
 zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'
-username = 'Admin'
-password = 'zabbix'
+auth_token = 'seu_token_aqui'  # Substitua pelo seu token de autenticação
 
-def zabbix_request(method, params, auth_token=None):
+def zabbix_request(method, params):
     headers = {'Content-Type': 'application/json'}
     payload = {
         'jsonrpc': '2.0',
@@ -31,13 +30,6 @@ try:
 
     # Solicitar o ID do template do usuário
     template_id = input("Digite o ID do template do Zabbix: ")
-
-    # Autenticar e obter o token de autenticação
-    auth_response = zabbix_request('user.login', {'user': username, 'password': password})
-    if 'result' in auth_response:
-        auth_token = auth_response['result']
-    else:
-        raise Exception(f"Erro ao autenticar: {auth_response}")
 
     contador = 0
 
@@ -67,7 +59,7 @@ try:
                     'groups': [{"groupid": hostgroup_id}],
                     'templates': [{"templateid": template_id}],
                     'description': description
-                }, auth_token)
+                })
 
             elif so_or_network.lower() == 'ativo de rede':
                 # Criar host para Ativo de Rede com os detalhes adicionais
@@ -90,7 +82,7 @@ try:
                     'groups': [{"groupid": hostgroup_id}],
                     'templates': [{"templateid": template_id}],
                     'description': description
-                }, auth_token)
+                })
 
             if 'result' in host_create_response:
                 print(f"""
@@ -111,8 +103,9 @@ except Exception as e:
     print(f"Erro geral: {e}")
 
 finally:
-    # Logout após criar os hosts
-    logout_response = zabbix_request('user.logout', {}, auth_token)
+    # Logout após criar os hosts (opcional)
+    # Se você não deseja fazer logout, pode comentar ou remover esta parte.
+    logout_response = zabbix_request('user.logout', {})
     if 'result' in logout_response:
         print("Logout realizado com sucesso.")
     else:
