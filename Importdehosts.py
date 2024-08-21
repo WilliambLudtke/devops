@@ -4,9 +4,8 @@ import json
 
 # Configurações do Zabbix
 zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Use 'https' se o servidor suportar HTTPS
-auth_token = 'seu_token_aqui'  # Substitua pelo seu token de autenticação
 
-def zabbix_request(method, params):
+def zabbix_request(method, params, auth_token=None):
     headers = {'Content-Type': 'application/json'}
     payload = {
         'jsonrpc': '2.0',
@@ -44,7 +43,24 @@ def read_csv(file_path):
     except Exception as e:
         print(f"Erro ao ler o arquivo CSV: {e}")
 
+def authenticate_zabbix():
+    # Requisição de autenticação para obter o token
+    auth_response = zabbix_request('user.login', {
+        'user': 'Admin',  # Substitua pelo seu nome de usuário
+        'password': 'zabbix'  # Substitua pela sua senha
+    })
+    if auth_response and 'result' in auth_response:
+        return auth_response['result']
+    else:
+        print(f"Erro ao autenticar: {auth_response}")
+        return None
+
 try:
+    # Autenticar e obter o token
+    auth_token = authenticate_zabbix()
+    if not auth_token:
+        raise Exception("Não foi possível autenticar. Verifique as credenciais e a API do Zabbix.")
+
     # Solicitar o ID do hostgroup do usuário
     hostgroup_id = input("Digite o ID do hostgroup do Zabbix: ")
 
@@ -90,7 +106,7 @@ try:
                     'groups': [{"groupid": hostgroup_id}],
                     'templates': [{"templateid": template_id}],
                     'description': description
-                })
+                }, auth_token=auth_token)
 
             elif so_or_network.lower() == 'ativo de rede':
                 # Criar host para Ativo de Rede com os detalhes adicionais
@@ -113,7 +129,7 @@ try:
                     'groups': [{"groupid": hostgroup_id}],
                     'templates': [{"templateid": template_id}],
                     'description': description
-                })
+                }, auth_token=auth_token)
 
             if host_create_response:
                 if 'result' in host_create_response:
@@ -143,7 +159,7 @@ finally:
     # Logout após criar os hosts (opcional)
     # Se você não deseja fazer logout, pode comentar ou remover esta parte.
     try:
-        logout_response = zabbix_request('user.logout', {})
+        logout_response = zabbix_request('user.logout', {}, auth_token=auth_token)
         if logout_response and 'result' in logout_response:
             print("Logout realizado com sucesso.")
         else:
