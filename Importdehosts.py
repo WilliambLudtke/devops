@@ -19,8 +19,11 @@ def zabbix_request(method, params):
         response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
         response_data = response.json()
+        
+        # Verificar se houve erro na resposta
         if 'error' in response_data:
             print(f"Erro na resposta da API: {response_data['error']}")
+        
         return response_data
     except requests.RequestException as e:
         print(f"Erro na requisição para Zabbix: {e}")
@@ -31,7 +34,7 @@ def zabbix_request(method, params):
 
 def read_csv(file_path):
     try:
-        with open(file_path, newline='') as csvfile:
+        with open(file_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
