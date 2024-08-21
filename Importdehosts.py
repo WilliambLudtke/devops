@@ -15,15 +15,31 @@ def zabbix_request(method, params):
         'auth': auth_token,
         'id': 1
     }
-    response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload))
-    return response.json()
+    try:
+        response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload))
+        response.raise_for_status()  # Levanta um erro para status HTTP não OK
+        response_data = response.json()
+        if 'error' in response_data:
+            print(f"Erro na resposta da API: {response_data['error']}")
+        return response_data
+    except requests.RequestException as e:
+        print(f"Erro na requisição para Zabbix: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Erro ao decodificar JSON da resposta: {e}")
+        return None
 
 def read_csv(file_path):
-    with open(file_path, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
-            yield row
+    try:
+        with open(file_path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
+                yield row
+    except FileNotFoundError as e:
+        print(f"Arquivo CSV não encontrado: {e}")
+    except Exception as e:
+        print(f"Erro ao ler o arquivo CSV: {e}")
 
 try:
     # Solicitar o ID do hostgroup do usuário
@@ -36,6 +52,9 @@ try:
 
     # Loop para criar hosts
     for i, data in enumerate(read_csv('ficha.csv'), 1):
+        if not data:
+            continue
+
         contador += 1
 
         # Mensagens de depuração para verificar os dados lidos
@@ -93,15 +112,21 @@ try:
                     'description': description
                 })
 
-            if 'result' in host_create_response:
-                print(f"""
-                Host criado: {host_name},
-                IP Atribuído: {ip_address},
-                Descrição: {description},
-                SO ou Ativo de Rede: {so_or_network}""")
+            if host_create_response:
+                if 'result' in host_create_response:
+                    print(f"""
+                    Host criado: {host_name},
+                    IP Atribuído: {ip_address},
+                    Descrição: {description},
+                    SO ou Ativo de Rede: {so_or_network}""")
+                else:
+                    print(f"Erro ao criar host {host_name}: {host_create_response}")
             else:
-                print(f"Erro ao criar host {host_name}: {host_create_response}")
+                print(f"Resposta vazia ao tentar criar o host {host_name}")
 
+        except KeyError as e:
+            print(f"Erro de chave ao processar o host {host_name}: {e}")
+            contador -= 1
         except Exception as e:
             print(f"Erro ao criar host {host_name}: {e}")
             contador -= 1
@@ -114,8 +139,11 @@ except Exception as e:
 finally:
     # Logout após criar os hosts (opcional)
     # Se você não deseja fazer logout, pode comentar ou remover esta parte.
-    logout_response = zabbix_request('user.logout', {})
-    if 'result' in logout_response:
-        print("Logout realizado com sucesso.")
-    else:
-        print(f"Erro ao fazer logout: {logout_response}")
+    try:
+        logout_response = zabbix_request('user.logout', {})
+        if logout_response and 'result' in logout_response:
+            print("Logout realizado com sucesso.")
+        else:
+            print(f"Erro ao fazer logout: {logout_response}")
+    except Exception as e:
+        print(f"Erro ao tentar fazer logout: {e}")
