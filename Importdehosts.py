@@ -22,6 +22,7 @@ def read_csv(file_path):
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
+            print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
             yield row
 
 try:
@@ -37,12 +38,20 @@ try:
     for i, data in enumerate(read_csv('ficha.csv'), 1):
         contador += 1
 
-        host_name = data['Host name']
-        ip_address = data['IP']
-        description = data['Descrição']
-        so_or_network = data['SO ou Ativo de Rede']
+        # Mensagens de depuração para verificar os dados lidos
+        print(f"Dados da linha {i}: {data}")
 
         try:
+            # Verificar se as chaves esperadas estão presentes
+            if 'Host name' not in data or 'IP' not in data or 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
+                print("Colunas esperadas ausentes no CSV.")
+                continue
+
+            host_name = data['Host name']
+            ip_address = data['IP']
+            description = data['Descrição']
+            so_or_network = data['SO ou Ativo de Rede']
+
             if so_or_network.lower() == 'so':
                 # Criar host para SO
                 host_create_response = zabbix_request('host.create', {
