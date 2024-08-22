@@ -15,13 +15,9 @@ def zabbix_request(method, params):
         'jsonrpc': '2.0',
         'method': method,
         'params': params,
-        'id': 1
+        'id': 1,
+        'auth': auth_token
     }
-
-    # Remover o auth_token para o logout
-    if method != 'user.logout':
-        payload['auth'] = auth_token
-
     try:
         response = session.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
@@ -69,7 +65,7 @@ try:
 
         try:
             # Verificar se as chaves esperadas estão presentes
-            if 'Host name' not in data or 'IP' not in data or 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
+            if 'Host name' not in data or 'IP' not in data ou 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
                 print("Colunas esperadas ausentes no CSV.")
                 continue
 
@@ -142,15 +138,3 @@ try:
 
 except Exception as e:
     print(f"Erro geral: {e}")
-
-finally:
-    # Logout após criar os hosts (opcional)
-    # Se você não deseja fazer logout, pode comentar ou remover esta parte.
-    try:
-        logout_response = zabbix_request('user.logout', {})
-        if logout_response and 'result' in logout_response:
-            print("Logout realizado com sucesso.")
-        else:
-            print(f"Erro ao fazer logout: {logout_response}")
-    except Exception as e:
-        print(f"Erro ao tentar fazer logout: {e}")
