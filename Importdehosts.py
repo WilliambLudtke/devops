@@ -3,30 +3,31 @@ import requests
 import json
 
 # Configurações do Zabbix
-zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Atualize para 'https' se necessário
-username = 'Admin'  # Substitua pelo seu nome de usuário
-password = 'zabbix'  # Substitua pela sua senha
+zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Use 'https' se o servidor suportar HTTPS
+auth_token = 'seu_token_aqui'  # Substitua pelo seu token de autenticação
 
-def zabbix_request(method, params, auth_token=None):
+# Criando uma sessão para manter a consistência das requisições
+session = requests.Session()
+
+def zabbix_request(method, params):
     headers = {'Content-Type': 'application/json'}
     payload = {
         'jsonrpc': '2.0',
         'method': method,
         'params': params,
-        'auth': auth_token,
         'id': 1
     }
+
+    # Remover o auth_token para o logout
+    if method != 'user.logout':
+        payload['auth'] = auth_token
+
     try:
-        response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
+        response = session.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
         response_data = response.json()
-        
-        # Verificar se houve erro na resposta
         if 'error' in response_data:
             print(f"Erro na resposta da API: {response_data['error']}")
-        else:
-            print(f"Resposta da API: {response_data}")  # Mensagem de depuração
-        
         return response_data
     except requests.RequestException as e:
         print(f"Erro na requisição para Zabbix: {e}")
@@ -35,21 +36,9 @@ def zabbix_request(method, params, auth_token=None):
         print(f"Erro ao decodificar JSON da resposta: {e}")
         return None
 
-def authenticate():
-    auth_params = {
-        'user': username,
-        'password': password
-    }
-    auth_response = zabbix_request('user.login', auth_params)
-    if auth_response and 'result' in auth_response:
-        return auth_response['result']
-    else:
-        print(f"Erro ao obter token de autenticação: {auth_response}")
-        return None
-
 def read_csv(file_path):
     try:
-        with open(file_path, newline='', encoding='utf-8') as csvfile:
+        with open(file_path, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
@@ -60,10 +49,6 @@ def read_csv(file_path):
         print(f"Erro ao ler o arquivo CSV: {e}")
 
 try:
-    auth_token = authenticate()
-    if not auth_token:
-        raise ValueError("Não foi possível obter o token de autenticação.")
-
     # Solicitar o ID do hostgroup do usuário
     hostgroup_id = input("Digite o ID do hostgroup do Zabbix: ")
 
@@ -93,42 +78,46 @@ try:
             description = data['Descrição']
             so_or_network = data['SO ou Ativo de Rede']
 
-            # Preparar parâmetros para criar o host
-            params = {
-                'host': host_name,
-                'status': 1,
-                'interfaces': [],
-                'groups': [{"groupid": hostgroup_id}],
-                'templates': [{"templateid": template_id}],
-                'description': description
-            }
-
             if so_or_network.lower() == 'so':
-                params['interfaces'].append({
-                    "type": 1,
-                    "main": 1,
-                    "useip": 1,
-                    "ip": ip_address,
-                    "dns": "",
-                    "port": "10050"
-                })
-            elif so_or_network.lower() == 'ativo de rede':
-                params['interfaces'].append({
-                    "type": 2,
-                    "main": 1,
-                    "useip": 1,
-                    "ip": ip_address,
-                    "dns": "",
-                    "port": "161",
-                    "details": {
-                        "version": 2,
-                        "bulk": 0,
-                        "community": "public"
-                    }
+                # Criar host para SO
+                host_create_response = zabbix_request('host.create', {
+                    'host': host_name,
+                    'status': 1,
+                    'interfaces': [{
+                        "type": 1,
+                        "main": 1,
+                        "useip": 1,
+                        "ip": ip_address,
+                        "dns": "",
+                        "port": "10050"
+                    }],
+                    'groups': [{"groupid": hostgroup_id}],
+                    'templates': [{"templateid": template_id}],
+                    'description': description
                 })
 
-            # Criar host
-            host_create_response = zabbix_request('host.create', params, auth_token=auth_token)
+            elif so_or_network.lower() == 'ativo de rede':
+                # Criar host para Ativo de Rede com os detalhes adicionais
+                host_create_response = zabbix_request('host.create', {
+                    'host': host_name,
+                    'status': 1,
+                    'interfaces': [{
+                        "type": 2,
+                        "main": 1,
+                        "useip": 1,
+                        "ip": ip_address,
+                        "dns": "",
+                        "port": "161",
+                        "details": {
+                            "version": 2,
+                            "bulk": 0,
+                            "community": "public"
+                        }
+                    }],
+                    'groups': [{"groupid": hostgroup_id}],
+                    'templates': [{"templateid": template_id}],
+                    'description': description
+                })
 
             if host_create_response:
                 if 'result' in host_create_response:
@@ -158,7 +147,7 @@ finally:
     # Logout após criar os hosts (opcional)
     # Se você não deseja fazer logout, pode comentar ou remover esta parte.
     try:
-        logout_response = zabbix_request('user.logout', {}, auth_token=auth_token)
+        logout_response = zabbix_request('user.logout', {})
         if logout_response and 'result' in logout_response:
             print("Logout realizado com sucesso.")
         else:
