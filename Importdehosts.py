@@ -65,7 +65,7 @@ try:
 
         try:
             # Verificar se as chaves esperadas estão presentes
-            if 'Host name' not in data or 'IP' not in data ou 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
+            if 'Host name' not in data or 'IP' not in data or 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
                 print("Colunas esperadas ausentes no CSV.")
                 continue
 
@@ -73,6 +73,8 @@ try:
             ip_address = data['IP']
             description = data['Descrição']
             so_or_network = data['SO ou Ativo de Rede']
+
+            print(f"Preparando para criar o host: {host_name} com IP {ip_address}")
 
             if so_or_network.lower() == 'so':
                 # Criar host para SO
@@ -114,6 +116,8 @@ try:
                     'templates': [{"templateid": template_id}],
                     'description': description
                 })
+
+            print(f"Resposta da API ao criar host: {host_create_response}")
 
             if host_create_response:
                 if 'result' in host_create_response:
