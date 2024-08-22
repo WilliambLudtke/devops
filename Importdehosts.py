@@ -6,20 +6,17 @@ import json
 zabbix_url = 'http://192.168.3.10/zabbix/api_jsonrpc.php'  # Use 'https' se o servidor suportar HTTPS
 auth_token = 'seu_token_aqui'  # Substitua pelo seu token de autenticação
 
-# Criando uma sessão para manter a consistência das requisições
-session = requests.Session()
-
 def zabbix_request(method, params):
     headers = {'Content-Type': 'application/json'}
     payload = {
         'jsonrpc': '2.0',
         'method': method,
         'params': params,
-        'id': 1,
-        'auth': auth_token
+        'auth': auth_token,
+        'id': 1
     }
     try:
-        response = session.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
+        response = requests.post(zabbix_url, headers=headers, data=json.dumps(payload), verify=False)
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
         response_data = response.json()
         if 'error' in response_data:
@@ -35,7 +32,7 @@ def zabbix_request(method, params):
 def read_csv(file_path):
     try:
         with open(file_path, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.DictReader(csvfile, delimiter=';')  # Ajuste para usar ponto e vírgula como delimitador
             for row in reader:
                 print(f"Lendo linha do CSV: {row}")  # Mensagem de depuração
                 yield row
@@ -73,8 +70,6 @@ try:
             ip_address = data['IP']
             description = data['Descrição']
             so_or_network = data['SO ou Ativo de Rede']
-
-            print(f"Preparando para criar o host: {host_name} com IP {ip_address}")
 
             if so_or_network.lower() == 'so':
                 # Criar host para SO
@@ -116,8 +111,6 @@ try:
                     'templates': [{"templateid": template_id}],
                     'description': description
                 })
-
-            print(f"Resposta da API ao criar host: {host_create_response}")
 
             if host_create_response:
                 if 'result' in host_create_response:
