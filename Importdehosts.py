@@ -41,6 +41,10 @@ def read_csv(file_path):
     except Exception as e:
         print(f"Erro ao ler o arquivo CSV: {e}")
 
+def log_error(host_name, error_message):
+    with open('hosts.log', 'a') as log_file:
+        log_file.write(f"Host: {host_name}, Erro: {error_message}\n")
+
 try:
     # Solicitar o ID do hostgroup do usuário
     hostgroup_id = input("Digite o ID do hostgroup do Zabbix: ")
@@ -63,8 +67,7 @@ try:
         try:
             # Verificar se as chaves esperadas estão presentes
             if 'Host name' not in data or 'IP' not in data or 'Descrição' not in data or 'SO ou Ativo de Rede' not in data:
-                print("Colunas esperadas ausentes no CSV.")
-                continue
+                raise ValueError("Colunas esperadas ausentes no CSV.")
 
             host_name = data['Host name']
             ip_address = data['IP']
@@ -120,15 +123,23 @@ try:
                     Descrição: {description},
                     SO ou Ativo de Rede: {so_or_network}""")
                 else:
-                    print(f"Erro ao criar host {host_name}: {host_create_response}")
+                    error_message = f"Erro ao criar host {host_name}: {host_create_response}"
+                    print(error_message)
+                    log_error(host_name, error_message)
             else:
-                print(f"Resposta vazia ao tentar criar o host {host_name}")
+                error_message = f"Resposta vazia ao tentar criar o host {host_name}"
+                print(error_message)
+                log_error(host_name, error_message)
 
         except KeyError as e:
-            print(f"Erro de chave ao processar o host {host_name}: {e}")
+            error_message = f"Erro de chave ao processar o host {host_name}: {e}"
+            print(error_message)
+            log_error(host_name, error_message)
             contador -= 1
         except Exception as e:
-            print(f"Erro ao criar host {host_name}: {e}")
+            error_message = f"Erro ao criar host {host_name}: {e}"
+            print(error_message)
+            log_error(host_name, error_message)
             contador -= 1
 
     print(f"Número de novos Hosts criados: {contador}")
