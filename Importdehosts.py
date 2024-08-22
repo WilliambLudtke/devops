@@ -20,13 +20,19 @@ def zabbix_request(method, params):
         response.raise_for_status()  # Levanta um erro para status HTTP não OK
         response_data = response.json()
         if 'error' in response_data:
-            print(f"Erro na resposta da API: {response_data['error']}")
+            error_message = f"Erro na resposta da API: {response_data['error']}"
+            print(error_message)
+            log_error(params.get('host', 'Desconhecido'), error_message)
         return response_data
     except requests.RequestException as e:
-        print(f"Erro na requisição para Zabbix: {e}")
+        error_message = f"Erro na requisição para Zabbix: {e}"
+        print(error_message)
+        log_error(params.get('host', 'Desconhecido'), error_message)
         return None
     except json.JSONDecodeError as e:
-        print(f"Erro ao decodificar JSON da resposta: {e}")
+        error_message = f"Erro ao decodificar JSON da resposta: {e}"
+        print(error_message)
+        log_error(params.get('host', 'Desconhecido'), error_message)
         return None
 
 def read_csv(file_path):
