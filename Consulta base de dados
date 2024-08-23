@@ -12,3 +12,6 @@ WHERE status = 0;
 
 
 SET GLOBAL sql_slave_skip_counter = 1;
+
+
+mysqlbinlog --start-position=360932683 --stop-position=360933683 /path/to/mysql-bin.000114 > transacao.sql
