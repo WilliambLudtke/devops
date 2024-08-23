@@ -28,3 +28,6 @@ AND h1.clock = h2.clock
 AND h1.ns = h2.ns
 AND h1.id > h2.id;  -- Supondo que 'id' seja uma coluna que pode ser usada para distinguir as entradas duplicadas
 
+
+SELECT eventid FROM zabbix.event_recovery
+WHERE eventid NOT IN (SELECT eventid FROM zabbix.events);
