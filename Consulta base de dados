@@ -8,3 +8,7 @@ GROUP BY table_schema;
 SELECT COUNT(*) AS total_hosts
 FROM hosts
 WHERE status = 0;
+
+
+
+SET GLOBAL sql_slave_skip_counter = 1;
