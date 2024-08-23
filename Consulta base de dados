@@ -18,3 +18,10 @@ mysqlbinlog --start-position=360932683 --stop-position=360933683 /path/to/mysql-
 
 
 SELECT * FROM performance_schema.replication_applier_status_by_worker;
+
+
+DELETE h1
+FROM history_uint h1
+JOIN history_uint h2
+ON h1.primary_key_column = h2.primary_key_column
+AND h1.id > h2.id;
