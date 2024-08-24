@@ -34,3 +34,11 @@ WHERE eventid NOT IN (SELECT eventid FROM zabbix.events);
 
 
 mysqldump -u [usuario] -p[senha] --routines --triggers --events --single-transaction --quick --lock-tables=false zabbix > zabbix_full_backup.sql
+
+
+
+#MYSQL:
+replica_skip_errors = 1062,1032,1452,1517,1507,1396,1493
+
+#MariaDB:
+slave-skip-errors = 1062,1032,1452,1517,1507,1396,1493
