@@ -42,3 +42,8 @@ replica_skip_errors = 1062,1032,1452,1517,1507,1396,1493
 
 #MariaDB:
 slave-skip-errors = 1062,1032,1452,1517,1507,1396,1493
+
+
+
+ps aux | grep zabbix | grep -v grep | awk '{print $2}' | xargs sudo kill -9
+
