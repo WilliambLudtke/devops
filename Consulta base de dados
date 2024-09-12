@@ -59,5 +59,5 @@ FROM
 JOIN 
     hosts h ON i.hostid = h.hostid 
 WHERE 
-    i.delay = '30';
+    CAST(i.delay AS UNSIGNED) = 30;
 
