@@ -47,3 +47,17 @@ slave-skip-errors = 1062,1032,1452,1517,1507,1396,1493
 
 ps aux | grep zabbix | grep -v grep | awk '{print $2}' | xargs sudo kill -9
 
+
+
+SELECT 
+    h.host, 
+    i.name, 
+    i.key_, 
+    i.delay 
+FROM 
+    items i 
+JOIN 
+    hosts h ON i.hostid = h.hostid 
+WHERE 
+    i.delay = '30';
+
