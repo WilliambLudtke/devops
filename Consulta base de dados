@@ -61,3 +61,5 @@ JOIN
 WHERE 
     CAST(i.delay AS UNSIGNED) = 30;
 
+
+grep -v '^ *#\|^$' /etc/zabbix/zabbix_server.conf
