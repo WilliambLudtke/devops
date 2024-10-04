@@ -63,3 +63,7 @@ WHERE
 
 
 grep -v '^ *#\|^$' /etc/zabbix/zabbix_server.conf
+
+
+
+8psSIDn7MGtu
