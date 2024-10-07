@@ -67,3 +67,6 @@ grep -v '^ *#\|^$' /etc/zabbix/zabbix_server.conf
 
 
 8psSIDn7MGtu
+
+
+https://repo.zabbix.com/zabbix/7.0/rhel/9/x86_64/zabbix-server-mysql-7.0.4-release1.el9.x86_64.rpm
