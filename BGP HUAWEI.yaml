@@ -1,0 +1,168 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 3d94047acde04dff85906ed2a7cbbbc9
+      name: Huawei
+  templates:
+    - uuid: 5335fe845fa14ce9abeb1f7514788847
+      template: 'BGP Huawei'
+      name: 'BGP Huawei'
+      groups:
+        - name: Huawei
+      items:
+        - uuid: 4780915f604f4342bc55df1018f01109
+          name: 'SNMP Walk BGP'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.4.1.2011.5.25.177.1.1.2.1.2,1.3.6.1.4.1.2011.5.25.177.1.1.2.1.4,1.3.6.1.4.1.2011.5.25.177.1.1.2.1.5,1.3.6.1.4.1.2011.5.25.177.1.1.3.1.1,1.3.6.1.4.1.2011.5.25.177.1.1.3.1.2,1.3.6.1.4.1.2011.5.25.177.1.1.3.1.3]'
+          key: net.bgp.walk
+          delay: 75s
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'walk[hwBgpPeerRemoteAs,hwBgpPeerRemoteAddr,hwBgpPeerState,hwBgpPeerPrefixRcvCounter,hwBgpPeerPrefixActiveCounter,hwBgpPeerPrefixAdvCounter]'
+          tags:
+            - tag: 'BGP Huawei'
+      discovery_rules:
+        - uuid: b8fe8bb0152d454f84546a6086e053fd
+          name: 'Discovery BGP Peers'
+          type: DEPENDENT
+          key: net.if.bgp
+          delay: '0'
+          lifetime: 3h
+          description: 'Discovering interfaces from IF-MIB. Interfaces with down(2) Administrative Status are not discovered.'
+          item_prototypes:
+            - uuid: a7aba53beb3640ea8bbb6eb489bf1d54
+              name: 'AS{#PEERASN} - {#PEERADDR}  Prefixos Recebidos Ativos'
+              type: DEPENDENT
+              key: 'hwBgpPeerPrefixActiveCounter[{#PEERADDR}]'
+              delay: '0'
+              history: 30d
+              description: 'The number of active prefixes received from the remote BGP peer.'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.177.1.1.3.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.bgp.walk
+              tags:
+                - tag: 'AS Peer'
+                  value: '{#PEERASN}'
+                - tag: BGP
+                  value: 'bgp.he.net/AS{#PEERASN}'
+            - uuid: 8b04845b209c45f1b117e7e436c3acd0
+              name: 'AS{#PEERASN} - {#PEERADDR}  Prefixos Advertidos'
+              type: DEPENDENT
+              key: 'hwBgpPeerPrefixAdvCounter[{#PEERADDR}]'
+              delay: '0'
+              history: 30d
+              description: 'The number of prefixes sent to the remote BGP peer.'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.177.1.1.3.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.bgp.walk
+              tags:
+                - tag: 'AS Peer'
+                  value: '{#PEERASN}'
+                - tag: BGP
+                  value: 'bgp.he.net/AS{#PEERASN}'
+            - uuid: 5b2367d5a3904edcb9f5efe84b318198
+              name: 'AS{#PEERASN} - {#PEERADDR}  Prefixos Recebidos'
+              type: DEPENDENT
+              key: 'hwBgpPeerPrefixRcvCounter[{#PEERADDR}]'
+              delay: '0'
+              history: 30d
+              description: 'The number of prefixes received from the remote BGP peer.'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.177.1.1.3.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.bgp.walk
+              tags:
+                - tag: 'AS Peer'
+                  value: '{#PEERASN}'
+                - tag: BGP
+                  value: 'bgp.he.net/AS{#PEERASN}'
+            - uuid: 9be409bff3fd429cbe5ec00fea270bb7
+              name: 'AS{#PEERASN} - {#PEERADDR} Status'
+              type: DEPENDENT
+              key: 'hwBgpPeerState[{#PEERADDR}]'
+              delay: '0'
+              history: 30d
+              description: |
+                The status of the remote BGP peer, including:
+                1:Idle(1)
+                2:Connect(2)
+                3:Active(3)
+                4:Opensent(4)
+                5:Openconfirm(5)
+                6:Established(6)
+              valuemap:
+                name: 'BGP Status'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.177.1.1.2.1.5.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.bgp.walk
+              tags:
+                - tag: 'AS Peer'
+                  value: '{#PEERASN}'
+                - tag: BGP
+                  value: 'bgp.he.net/AS{#PEERASN}'
+              trigger_prototypes:
+                - uuid: aeed656434444ca4aac5c84002963bd0
+                  expression: 'last(/BGP Huawei/hwBgpPeerState[{#PEERADDR}])<>6'
+                  name: 'BGP DOWN {#PEERADDR}'
+                  priority: DISASTER
+                  manual_close: 'YES'
+                  tags:
+                    - tag: 'bgp.he.net/AS{#PEERASN}'
+          master_item:
+            key: net.bgp.walk
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#PEERASN}'
+                - 1.3.6.1.4.1.2011.5.25.177.1.1.2.1.2
+                - '0'
+                - '{#PEERADDR}'
+                - 1.3.6.1.4.1.2011.5.25.177.1.1.2.1.4
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+      valuemaps:
+        - uuid: 2e6575b868b540efa036652e97921d61
+          name: 'BGP Status'
+          mappings:
+            - value: '1'
+              newvalue: Idle
+            - value: '2'
+              newvalue: Connect
+            - value: '3'
+              newvalue: Active
+            - value: '4'
+              newvalue: Opensent
+            - value: '5'
+              newvalue: Openconfirm
+            - value: '6'
+              newvalue: Established

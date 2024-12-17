@@ -1,0 +1,1178 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: a716161dd43a41c1bbefbfd296f7669f
+      name: 'Device - Roteador_BGP'
+  templates:
+    - uuid: d563b9e2843a4c1686de1670942e156f
+      template: 'Roteador BGP - Huawei NE20'
+      name: 'Roteador BGP - Huawei NE20'
+      templates:
+        - name: 'Template ICMP Ping - Disaster'
+      groups:
+        - name: 'Device - Roteador_BGP'
+      items:
+        - uuid: eea79c2d915f4c8d9f456ec1325cf2ea
+          name: 'SNMP Walk Optical Interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.47.1.1.1.1.7,1.3.6.1.2.1.47.1.1.1.1.5,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.10,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.3,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.13,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.20,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.4,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.5,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.32,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.33,1.3.6.1.4.1.2011.5.25.31.1.1.3.1.11]'
+          key: net.if.optics.walk
+          delay: 90s
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'walk[entPhysicalName,entPhysicalClass, hwEntityOpticalType,hwEntityOpticalTransDistance,hwEntityOpticalRxLowThreshold,hwEntityOpticalRxLowWarnThreshold,hwEntityOpticalVendorSn,hwEntityOpticalTemperature,hwEntityOpticalLaneRxPower,hwEntityOpticalLaneTxPower,hwEntityOpticalTransBW]'
+        - uuid: 8699f803f6c843cc9526ecbec31a39dc
+          name: 'SNMP Walk Interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.2.2.1.2,1.3.6.1.2.1.2.2.1.3,1.3.6.1.2.1.2.2.1.4,1.3.6.1.2.1.2.2.1.7,1.3.6.1.2.1.2.2.1.8,1.3.6.1.2.1.2.2.1.11,1.3.6.1.2.1.2.2.1.14,1.3.6.1.2.1.2.2.1.17,1.3.6.1.2.1.2.2.1.20,1.3.6.1.2.1.31.1.1.1.6,1.3.6.1.2.1.31.1.1.1.10,1.3.6.1.2.1.31.1.1.1.15,1.3.6.1.2.1.31.1.1.1.18]'
+          key: net.if.walk
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'walk[ifDescr,ifType,ifMtu,ifAdminStatus,ifOperStatus,ifInUcastPkts,ifInErrors,ifOutUcastPkts,ifOutErrors,ifHCInOctets,ifHCOutOctets,ifHighSpeed,ifAlias]'
+      discovery_rules:
+        - uuid: d00e8e19a82c42d9845aed2283a242c7
+          name: 'Network interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},IF-MIB::ifDescr]'
+          key: ifDescr
+          delay: '60'
+          status: DISABLED
+          description: |
+            You may also consider using IF-MIB::ifType or IF-MIB::ifAlias for discovery depending on your filtering needs.
+            
+            {$SNMP_COMMUNITY} is a global macro.
+          item_prototypes:
+            - uuid: 8815d88265da491b9a09edb713190164
+              name: '{#SNMPVALUE} - ifAlias'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifAlias.{#SNMPINDEX}'
+              key: 'ifAlias[{#SNMPVALUE}]'
+              delay: 1h
+              history: 1w
+              trends: '0'
+              value_type: CHAR
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: 1a314620a3da499cadfa67eb2f2a1b03
+              name: '{#SNMPVALUE} - ifName'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifDescr.{#SNMPINDEX}'
+              key: 'ifDescr[{#SNMPVALUE}]'
+              delay: 1h
+              history: 1w
+              trends: '0'
+              value_type: CHAR
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: 0bf3b0e7b531457387330b40187d93db
+              name: 'IN {#SNMPVALUE}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifHCInOctets.{#SNMPINDEX}'
+              key: 'ifHCInOctets[{#SNMPVALUE}]'
+              units: bps
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: 49854d05968b4056aa538903d7e427a5
+              name: 'OUT {#SNMPVALUE}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifHCOutOctets.{#SNMPINDEX}'
+              key: 'ifHCOutOctets[{#SNMPVALUE}]'
+              units: bps
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: a5329e6e1fb04044a919042eebb1ae5a
+              name: '{#SNMPVALUE} - ifInErrors'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifInErrors.{#SNMPINDEX}'
+              key: 'ifInErrors[{#SNMPVALUE}]'
+              delay: 3m
+              history: 7d
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              tags:
+                - tag: Application
+                  value: Interfaces
+              trigger_prototypes:
+                - uuid: 1bdf940f51f84c52a3bf909f90a13ef2
+                  expression: 'avg(/Roteador BGP - Huawei NE20/ifInErrors[{#SNMPVALUE}],24h)>0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'avg(/Roteador BGP - Huawei NE20/ifInErrors[{#SNMPVALUE}],24h)=0'
+                  name: '{HOST.NAME} apresenta erros de IN na interface {#SNMPVALUE}'
+                  priority: AVERAGE
+            - uuid: 42b39e0c214c48fbaea718386259961f
+              name: '{#SNMPVALUE} - PPS IN'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.11.{#SNMPINDEX}'
+              key: 'ifInUcastPkts[{#SNMPVALUE}]'
+              delay: 60s
+              history: 7d
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: 7f968dd95d604d16a2b2b3f1a6fc5b82
+              name: '{#SNMPVALUE} - ifOperStatus'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifOperStatus.{#SNMPINDEX}'
+              key: 'ifOperStatus[{#SNMPVALUE}]'
+              history: 1w
+              tags:
+                - tag: Application
+                  value: Interfaces
+            - uuid: 2c5ee2f99286422fba23af0b85601fa2
+              name: '{#SNMPVALUE} - ifOutErrors'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifOutErrors.{#SNMPINDEX}'
+              key: 'ifOutErrors[{#SNMPVALUE}]'
+              delay: 3m
+              history: 7d
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              tags:
+                - tag: Application
+                  value: Interfaces
+              trigger_prototypes:
+                - uuid: 32e5ece4c2db4400a53c7c13e588e64b
+                  expression: 'avg(/Roteador BGP - Huawei NE20/ifOutErrors[{#SNMPVALUE}],24h)>0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'avg(/Roteador BGP - Huawei NE20/ifOutErrors[{#SNMPVALUE}],24h)=0'
+                  name: '{HOST.NAME} apresenta erros de OUT na interface {#SNMPVALUE}'
+                  priority: AVERAGE
+            - uuid: e10ade182e3144baa7022ed30911bcbf
+              name: '{#SNMPVALUE} - PPS OUT'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.17.{#SNMPINDEX}'
+              key: 'ifOutUcastPkts[{#SNMPVALUE}]'
+              delay: 60s
+              history: 7d
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              tags:
+                - tag: Application
+                  value: Interfaces
+          graph_prototypes:
+            - uuid: a68fdc3d30ed41ee8cb2e92e1f7317fe
+              name: '{#SNMPVALUE} - {?last(//ifAlias[{#SNMPVALUE}])}'
+              percent_left: '95'
+              percent_right: '95'
+              graph_items:
+                - drawtype: FILLED_REGION
+                  color: 1A7C11
+                  calc_fnc: MAX
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifHCInOctets[{#SNMPVALUE}]'
+                - sortorder: '1'
+                  drawtype: BOLD_LINE
+                  color: 3333FF
+                  calc_fnc: MAX
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifHCOutOctets[{#SNMPVALUE}]'
+            - uuid: f03ca4ac1faf4900a905566ec3c9cbac
+              name: '{#SNMPVALUE} - {?last(//ifAlias[{#SNMPVALUE}])}  - PPS'
+              graph_items:
+                - color: 00CC00
+                  calc_fnc: ALL
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifInUcastPkts[{#SNMPVALUE}]'
+                - sortorder: '1'
+                  color: 0000DD
+                  calc_fnc: ALL
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifOutUcastPkts[{#SNMPVALUE}]'
+                - sortorder: '2'
+                  color: EEEE00
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifOperStatus[{#SNMPVALUE}]'
+                - sortorder: '3'
+                  color: DD0000
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifInErrors[{#SNMPVALUE}]'
+                - sortorder: '4'
+                  color: DD0000
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'ifOutErrors[{#SNMPVALUE}]'
+        - uuid: ef2128254b2547e1802f8bd3b7124c88
+          name: 'Discovery Physical Interfaces'
+          type: DEPENDENT
+          key: ifDescrPhysical
+          delay: '0'
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#IFADMIN}'
+                value: (1|3)
+                formulaid: A
+              - macro: '{#IFTYPE}'
+                value: (6|161)
+                formulaid: B
+          description: 'Discovering interfaces from IF-MIB. Interfaces with down(2) Administrative Status are not discovered.'
+          item_prototypes:
+            - uuid: 703289c5423b4764802110df9acc1480
+              name: 'Admin status of interface {#SNMPVALUE}'
+              type: DEPENDENT
+              key: 'ifAdminStatus[{#SNMPVALUE}]'
+              delay: '0'
+              history: 14d
+              description: |
+                MIB: IF-MIB
+                The current operational state of the interface.
+                - The testing(3) state indicates that no operational packet scan be passed
+                - If ifAdminStatus is down(2) then ifOperStatus should be down(2)
+                - If ifAdminStatus is changed to up(1) then ifOperStatus should change to up(1) if the interface is ready to transmit and receive network traffic
+                - It should change todormant(5) if the interface is waiting for external actions (such as a serial line waiting for an incoming connection)
+                - It should remain in the down(2) state if and only if there is a fault that prevents it from going to the up(1) state
+                - It should remain in the notPresent(6) state if the interface has missing(typically, hardware) components.
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.7.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#SNMPVALUE}'
+            - uuid: a7c2de4d828249809d8d780b16a014af
+              name: 'Interface {#IFNAME}({#IFALIAS}): Bits recebidos'
+              type: DEPENDENT
+              key: 'net.if.in[ifHCInOctets.{#SNMPINDEX}]'
+              delay: '0'
+              history: 30d
+              units: bps
+              description: |
+                MIB: IF-MIB
+                O número total de octetos recebidos na interface, incluindo caracteres de enquadramento. Este objeto é uma versão de 64 bits do ifInOctets. As descontinuidades no valor desse contador podem ocorrer na reinicialização do sistema de gerenciamento e, em outros momentos, conforme indicado pelo valor de ifCounterDiscontinuityTime.
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.31.1.1.1.6.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: 65d5c8b271ce4e99911c97892eae747a
+              name: 'Interface {#IFNAME}({#IFALIAS}): Erros IN'
+              type: DEPENDENT
+              key: 'net.if.in[ifInErrors.{#SNMPINDEX}]'
+              delay: '0'
+              history: 30d
+              units: bps
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.14.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: 4c9218f311eb4698a5c3d6392d915176
+              name: 'Interface {#IFNAME}({#IFALIAS}): Bits enviados'
+              type: DEPENDENT
+              key: 'net.if.out[ifHCOutOctets.{#SNMPINDEX}]'
+              delay: '0'
+              history: 30d
+              units: bps
+              description: |
+                MIB: IF-MIB
+                O número total de octetos transmitidos fora da interface, incluindo caracteres de enquadramento. Este objeto é uma versão de 64 bits do IfOutOctets. As descontinuidades no valor desse contador podem ocorrer na reinicialização do sistema de gerenciamento e em outros momentos, conforme indicado pelo valor de ifCounterDiscontinuityTime.
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.31.1.1.1.10.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: 32281b2c269a45f6abce1fa402b77c32
+              name: 'Interface {#IFNAME}({#IFALIAS}): Erros OUT'
+              type: DEPENDENT
+              key: 'net.if.out[ifOutErrors.{#SNMPINDEX}]'
+              delay: '0'
+              history: 30d
+              units: bps
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.20.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: e760ce9bd0e348a2aecc8816e54bc3fe
+              name: 'Interface {#IFNAME}({#IFALIAS}): PPS recebidos'
+              type: DEPENDENT
+              key: 'net.if.pps.in[ifInUcastPkts.{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.11.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: d9f286a427f646dfa4ce9e7958222ce5
+              name: 'Interface {#IFNAME}({#IFALIAS}): PPS enviados'
+              type: DEPENDENT
+              key: 'net.if.pps.out[ifOutUcastPkts.{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.17.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: 35c9e334b00943378ec49b97dde7970e
+              name: 'Interface {#IFNAME}({#IFALIAS}): Velocidade'
+              type: DEPENDENT
+              key: 'net.if.speed[ifHighSpeed.{#SNMPINDEX}]'
+              delay: '0'
+              history: 1w
+              units: bps
+              description: |
+                MIB: IF-MIB
+                An estimate of the interface's current bandwidth in units of 1,000,000 bits per second.  If this object reports a value of `n' then the speed of the interface is somewhere in the range of `n-500,000' to`n+499,999'.  For interfaces which do not vary in bandwidth or for those where no accurate estimation can be made, this object should contain the nominal bandwidth.  For a sub-layer which has no concept of bandwidth, this object should be zero.
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+            - uuid: b9c169543d6f44edbd7bea4fcd6e3d6a
+              name: 'Interface {#IFNAME}({#IFALIAS}): Status Operacional'
+              type: DEPENDENT
+              key: 'net.if.status[ifOperStatus.{#SNMPINDEX}]'
+              delay: '0'
+              history: 14d
+              description: |
+                MIB: IF-MIB
+                The current operational state of the interface.
+                - The testing(3) state indicates that no operational packet scan be passed
+                - If ifAdminStatus is down(2) then ifOperStatus should be down(2)
+                - If ifAdminStatus is changed to up(1) then ifOperStatus should change to up(1) if the interface is ready to transmit and receive network traffic
+                - It should change todormant(5) if the interface is waiting for external actions (such as a serial line waiting for an incoming connection)
+                - It should remain in the down(2) state if and only if there is a fault that prevents it from going to the up(1) state
+                - It should remain in the notPresent(6) state if the interface has missing(typically, hardware) components.
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.walk
+              tags:
+                - tag: Alias
+                  value: '{#IFALIAS}'
+                - tag: Interface
+                  value: '{#IFNAME}'
+          trigger_prototypes:
+            - uuid: a4792c3262f34390b1125062578aaa34
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.70) < avg(/Roteador BGP - Huawei NE20/net.if.in[ifHCInOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} IN acima de 70%'
+              priority: AVERAGE
+            - uuid: 84651e13e454452bb8d372e894738d37
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.85) < avg(/Roteador BGP - Huawei NE20/net.if.in[ifHCInOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} IN acima de 85%'
+              priority: HIGH
+            - uuid: 10222f76aa6a4bf1b7e541deeadcb75f
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.95) < avg(/Roteador BGP - Huawei NE20/net.if.in[ifHCInOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} IN acima de 95%'
+              priority: DISASTER
+            - uuid: 37cabace846b413b9e0b23439fc80f27
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.70) < avg(/Roteador BGP - Huawei NE20/net.if.out[ifHCOutOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} OUT acima de 70%'
+              priority: AVERAGE
+            - uuid: 1aa5ecd1749c4553a2f6c1a8ada64998
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.85) < avg(/Roteador BGP - Huawei NE20/net.if.out[ifHCOutOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} OUT acima de 85%'
+              priority: HIGH
+            - uuid: e751276abe504f269afec7f78157019d
+              expression: '((last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])*0.95) < avg(/Roteador BGP - Huawei NE20/net.if.out[ifHCOutOctets.{#SNMPINDEX}],2m)) and last(/Roteador BGP - Huawei NE20/net.if.speed[ifHighSpeed.{#SNMPINDEX}])<>0'
+              name: 'Ampliacao Necessaria - {HOST.NAME} na interface {#IFNAME} - {#IFALIAS} OUT acima de 95%'
+              priority: DISASTER
+            - uuid: c42f1d2703c54fdfb03ebb39f14c82ec
+              expression: 'last(/Roteador BGP - Huawei NE20/net.if.status[ifOperStatus.{#SNMPINDEX}])<>1 and last(/Roteador BGP - Huawei NE20/ifAdminStatus[{#SNMPVALUE}])=1'
+              name: 'Porta Down {#IFNAME} - {#IFALIAS}'
+              priority: DISASTER
+              description: |
+                Último Valor: {ITEM.LASTVALUE1}.
+                Interface is down
+            - uuid: b7fc86d6ae2a4f119bf467d18595b555
+              expression: 'avg(/Roteador BGP - Huawei NE20/net.if.in[ifInErrors.{#SNMPINDEX}],5m)>0 or avg(/Roteador BGP - Huawei NE20/net.if.out[ifOutErrors.{#SNMPINDEX}],5m)>0'
+              name: '{HOST.NAME} está taxando erros na interface {#IFNAME} - {#IFALIAS}'
+              priority: HIGH
+          graph_prototypes:
+            - uuid: 0203170f23a84c58ac7fd7b1b6692d84
+              name: 'Tráfego da Interface: {#IFNAME}({#IFALIAS})'
+              graph_items:
+                - color: 199C0D
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'net.if.in[ifHCInOctets.{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: F63100
+                  item:
+                    host: 'Roteador BGP - Huawei NE20'
+                    key: 'net.if.out[ifHCOutOctets.{#SNMPINDEX}]'
+          master_item:
+            key: net.if.walk
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#SNMPVALUE}'
+                - 1.3.6.1.2.1.2.2.1.2
+                - '0'
+                - '{#IFTYPE}'
+                - 1.3.6.1.2.1.2.2.1.3
+                - '0'
+                - '{#IFADMIN}'
+                - 1.3.6.1.2.1.2.2.1.7
+                - '0'
+                - '{#IFALIAS}'
+                - 1.3.6.1.2.1.31.1.1.1.18
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+        - uuid: 602b8a95786a418099cb20d7edc75563
+          name: 'Descoberta de Interfaces QSFP'
+          type: DEPENDENT
+          key: net.if.discovery.qsfp
+          delay: '0'
+          filter:
+            evaltype: FORMULA
+            formula: 'A and B and (C or D)'
+            conditions:
+              - macro: '{#ENTOPTICALTYPE}'
+                value: '0'
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+              - macro: '{#ENTPHYSICALCLASS}'
+                value: '10'
+                formulaid: B
+              - macro: '{#ENTPHYSICALBW}'
+                value: '40000'
+                formulaid: C
+              - macro: '{#ENTPHYSICALBW}'
+                value: '100000'
+                formulaid: D
+          item_prototypes:
+            - uuid: 4a80fc809c60402784e1579dabb09e42
+              name: '{#ENTPHYSICALNAME} - Optical Rx'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPowerQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.32.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: f45c016bf72542938c25154af83bf853
+              name: '{#ENTPHYSICALNAME} - Optical Rx Lane 0'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPowerQSFP_lane0[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){0}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneRxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 03ef670bc4974bccb2d40dbb1bf31cf9
+              name: '{#ENTPHYSICALNAME} - Optical Rx Lane 1'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPowerQSFP_lane1[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){1}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneRxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: f11deff96ddc407cb79221b488591318
+              name: '{#ENTPHYSICALNAME} - Optical Rx Lane 2'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPowerQSFP_lane2[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){2}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneRxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: ad818dd11e5b4d05849239fe39f47e15
+              name: '{#ENTPHYSICALNAME} - Optical Rx Lane 3'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPowerQSFP_lane3[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){3}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneRxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 892809a9230b4184b14b71ead40d1468
+              name: '{#ENTPHYSICALNAME} - Optical Tx'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPowerQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.33.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: c0e4a5bd07ad4fbf90a0b599e27c956c
+              name: '{#ENTPHYSICALNAME} - Optical Tx Lane 0'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPowerQSFP_lane0[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){0}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneTxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 962fcea388324df8be035f3fe750767f
+              name: '{#ENTPHYSICALNAME} - Optical Tx Lane 1'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPowerQSFP_lane1[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){1}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneTxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 1338e3436d3444f0b26852ed7ac5e67c
+              name: '{#ENTPHYSICALNAME} - Optical Tx Lane 2'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPowerQSFP_lane2[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){2}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneTxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: dcab6a2326ab4f7bad32286849888dd7
+              name: '{#ENTPHYSICALNAME} - Optical Tx Lane 3'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPowerQSFP_lane3[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^(?:[^,]+,){3}([^,]+)'
+                    - \1
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: 'hwEntityOpticalLaneTxPowerQSFP[{#ENTPHYSICALNAME}]'
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 8b34a0e56bec45a4b3fe6c006dddb1d7
+              name: 'Optical Rx Threshold {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalRxLowThresholdQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.13.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: cc0ddeea3ec74b178a96a6204d77d132
+              name: 'Optical Rx Warning Threshold {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalRxLowWarnThresholdQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.20.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: a562c58dcdca4b6b950cf17ca51a0e6e
+              name: 'Temperatura {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalTemperatureQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              units: ºC
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.5.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Temperatura
+                - tag: Transceiver
+            - uuid: 77d4f00d6d4c42fbbc3fea1dc56199c5
+              name: 'Distancia {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalTransferDistanceQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 98cb90a48a2944b7b7f94ecacfd8cd80
+              name: 'SN GBIC {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalVendorSnQSFP[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.4.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Patrimonio
+                - tag: Transceiver
+          master_item:
+            key: net.if.optics.walk
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#ENTPHYSICALBW}'
+                - 1.3.6.1.4.1.2011.5.25.31.1.1.3.1.11
+                - '0'
+                - '{#ENTPHYSICALCLASS}'
+                - 1.3.6.1.2.1.47.1.1.1.1.5
+                - '0'
+                - '{#ENTOPTICALTYPE}'
+                - 1.3.6.1.4.1.2011.5.25.31.1.1.3.1.10
+                - '0'
+                - '{#ENTPHYSICALNAME}'
+                - 1.3.6.1.2.1.47.1.1.1.1.7
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+        - uuid: ec709890163e46988e4c52a2b2b60732
+          name: 'Descoberta de Interfaces SFP'
+          type: DEPENDENT
+          key: net.if.discovery.sfp
+          delay: '0'
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#ENTOPTICALTYPE}'
+                value: '0'
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+              - macro: '{#ENTPHYSICALBW}'
+                value: '40000'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+              - macro: '{#ENTPHYSICALBW}'
+                value: '100000'
+                operator: NOT_MATCHES_REGEX
+                formulaid: C
+              - macro: '{#ENTPHYSICALCLASS}'
+                value: '10'
+                formulaid: D
+          description: 'Discovering interfaces from IF-MIB. Interfaces with down(2) Administrative Status are not discovered.'
+          item_prototypes:
+            - uuid: 5d6b928dc64a4908aad7de309b76973a
+              name: '{#ENTPHYSICALNAME} - Optical Rx'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneRxPower[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              trends: 731d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.32.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 64e40cb071b54cfc805f79ff0a7da8bd
+              name: '{#ENTPHYSICALNAME} - Optical Tx'
+              type: DEPENDENT
+              key: 'hwEntityOpticalLaneTxPower[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.33.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 85a1d21f40e441638425f38e3130f9e1
+              name: 'Optical Rx Threshold {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalRxLowThreshold[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.13.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 82459bb969cb488c91547a2057a5eea6
+              name: 'Optical Rx Warning Threshold {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalRxLowWarnThreshold[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.20.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 693a063b8f5f4518ac60a4cae706e6bd
+              name: 'Temperatura {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalTemperature[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              value_type: FLOAT
+              units: ºC
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.5.{#SNMPINDEX}'
+                    - '0'
+                - type: IN_RANGE
+                  parameters:
+                    - '-254'
+                    - '255'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Temperatura
+                - tag: Transceiver
+            - uuid: 9ea923c7d9d04e1e8dda2a28aca895a5
+              name: 'Distancia {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalTransferDistance[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '3600'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Transceiver
+            - uuid: 875d1f1853894336920b86a7acf1d9b5
+              name: 'SN GBIC {#ENTPHYSICALNAME}'
+              type: DEPENDENT
+              key: 'hwEntityOpticalVendorSn[{#ENTPHYSICALNAME}]'
+              delay: '0'
+              history: 30d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2011.5.25.31.1.1.3.1.4.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '7200'
+              master_item:
+                key: net.if.optics.walk
+              tags:
+                - tag: Interface
+                  value: '{#ENTPHYSICALNAME}'
+                - tag: Patrimonio
+                - tag: Transceiver
+          master_item:
+            key: net.if.optics.walk
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#ENTPHYSICALBW}'
+                - 1.3.6.1.4.1.2011.5.25.31.1.1.3.1.11
+                - '0'
+                - '{#ENTPHYSICALCLASS}'
+                - 1.3.6.1.2.1.47.1.1.1.1.5
+                - '0'
+                - '{#ENTOPTICALTYPE}'
+                - 1.3.6.1.4.1.2011.5.25.31.1.1.3.1.10
+                - '0'
+                - '{#ENTPHYSICALNAME}'
+                - 1.3.6.1.2.1.47.1.1.1.1.7
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
