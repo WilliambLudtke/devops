@@ -1,6 +1,9 @@
 https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/net/checkpoint/quantum_ngfw_snmp/template_net_checkpoint_ngfw_snmp.yaml?at=release%2F7.0
 
 
+https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/net/huawei_snmp/template_net_huawei_snmp.yaml?at=release%2F7.0
+
+
 SELECT table_schema AS "Database",
 ROUND(SUM(data_length + index_length) / 1024 / 1024 / 1024, 2) AS "Size (GB)"
 FROM information_schema.tables
