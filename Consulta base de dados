@@ -129,3 +129,40 @@ for (var i = 0; i < data.length; i++) {
 // Retorna o JSON atualizado como string
 return JSON.stringify(data);
 
+
+
+
+
+
+
+
+// O JSON é recebido como o valor do item
+var jsonValue = value;
+
+// Faz o parse do JSON para um objeto JavaScript
+var data = JSON.parse(jsonValue);
+
+// Função para converter hexadecimal com espaços para endereço IPv6
+function hexToIPv6(hexValue) {
+    // Remove espaços e converte em grupos de 4 caracteres
+    var cleanHex = hexValue.trim().replace(/\s+/g, '');
+    var ipv6 = [];
+
+    for (var i = 0; i < cleanHex.length; i += 4) {
+        ipv6.push(cleanHex.substring(i, i + 4));
+    }
+
+    // Junta os grupos no formato IPv6
+    return ipv6.join(':');
+}
+
+// Atualiza o campo {#SNMPVALUE} no JSON
+for (var i = 0; i < data.length; i++) {
+    if (data[i]["{#SNMPVALUE}"]) {
+        data[i]["{#SNMPVALUE}"] = hexToIPv6(data[i]["{#SNMPVALUE}"]);
+    }
+}
+
+// Retorna o JSON atualizado como string
+return JSON.stringify(data);
+
