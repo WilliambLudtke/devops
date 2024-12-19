@@ -9,6 +9,23 @@ ROUND(SUM(data_length + index_length) / 1024 / 1024 / 1024, 2) AS "Size (GB)"
 FROM information_schema.tables
 GROUP BY table_schema;
 
+// O valor hexadecimal é passado como input para o script
+var hexValue = value;
+
+// Remove possíveis prefixos "0x" ou espaços
+hexValue = hexValue.trim().replace(/^0x/, '');
+
+// Converte o valor hexadecimal para decimal
+var decimalValue = parseInt(hexValue, 16);
+
+// Converte para o formato de endereço IP
+var ip =
+  (decimalValue >> 24 & 255) + "." +
+  (decimalValue >> 16 & 255) + "." +
+  (decimalValue >> 8 & 255) + "." +
+  (decimalValue & 255);
+
+return ip;
 
 
 SELECT COUNT(*) AS total_hosts
