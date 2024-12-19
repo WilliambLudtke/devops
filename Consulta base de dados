@@ -94,3 +94,38 @@ grep -v '^ *#\|^$' /etc/zabbix/zabbix_server.conf
 
 
 https://repo.zabbix.com/zabbix/7.0/rhel/9/x86_64/zabbix-server-mysql-7.0.4-release1.el9.x86_64.rpm
+
+
+
+
+// O JSON é recebido como o valor do item
+var jsonValue = value;
+
+// Faz o parse do JSON para um objeto JavaScript
+var data = JSON.parse(jsonValue);
+
+// Função para converter hexadecimal com espaços para endereço IP
+function hexToIp(hexValue) {
+    // Remove espaços
+    hexValue = hexValue.replace(/\s+/g, '');
+    // Converte para decimal
+    var decimalValue = parseInt(hexValue, 16);
+    // Formata como IP
+    return (
+        ((decimalValue >> 24) & 255) + "." +
+        ((decimalValue >> 16) & 255) + "." +
+        ((decimalValue >> 8) & 255) + "." +
+        (decimalValue & 255)
+    );
+}
+
+// Atualiza o campo {#SNMPVALUE} no JSON
+for (var i = 0; i < data.length; i++) {
+    if (data[i]["{#SNMPVALUE}"]) {
+        data[i]["{#SNMPVALUE}"] = hexToIp(data[i]["{#SNMPVALUE}"]);
+    }
+}
+
+// Retorna o JSON atualizado como string
+return JSON.stringify(data);
+
