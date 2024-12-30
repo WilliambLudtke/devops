@@ -1,154 +1,58 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-
-// Constantes
+// Configuração inicial
 const JSONFILE = '/tmp/bindstats.json';
 const CACHELIFE = 60;
 
-// Argumentos da linha de comando
-const args = process.argv.slice(2);
-const action = args[0];
-const zone = args.includes('-z') ? args[args.indexOf('-z') + 1] : null;
-const counter = args.includes('-c') ? args[args.indexOf('-c') + 1] : null;
-const port = args.includes('-p') ? parseInt(args[args.indexOf('-p') + 1], 10) : 8653;
+// Argumentos
+const args = {
+    action: process.argv[2],
+    z: process.argv[3], // zone
+    c: process.argv[4], // counter
+    p: process.argv[5]  // port
+};
 
-// Função para carregar estatísticas do Bind
-function loadBindStats() {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'localhost',
-            port: port,
-            path: '/',
-            method: 'GET',
-        };
+const port = args.p || 8653; // Porta padrão
 
-        const req = http.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-            res.on('end', () => {
-                if (res.statusCode === 200) {
-                    resolve(data);
-                } else {
-                    reject(new Error(`HTTP GET failed with status ${res.statusCode}`));
-                }
-            });
-        });
-
-        req.on('error', (e) => {
-            reject(new Error(`Error loading Bind statistics: ${e.message}`));
-        });
-
-        req.end();
-    });
+// Leitura do Cache
+function readCache() {
+    try {
+        const file = new File(JSONFILE, 'r');
+        const content = file.readAll();
+        file.close();
+        return JSON.parse(content);
+    } catch (err) {
+        return null;
+    }
 }
 
-// Função principal
-(async function main() {
-    try {
-        let j = {};
+// Ação principal
+function main() {
+    const cache = readCache();
 
-        // Verificar cache
-        if (fs.existsSync(JSONFILE) && Date.now() - fs.statSync(JSONFILE).mtimeMs <= CACHELIFE * 1000) {
-            j = JSON.parse(fs.readFileSync(JSONFILE, 'utf8'));
-        } else {
-            const content = await loadBindStats();
-            const parser = require('xml2js').parseStringPromise;
-
-            const root = await parser(content);
-            let version;
-
-            if (root.isc) {
-                version = root.isc.statistics[0].$.version;
-            } else if (root.statistics) {
-                version = root.statistics.$.version;
-            } else {
-                console.error('Unknown root tag');
-                console.log('ZBX_NOTSUPPORTED');
-                process.exit(1);
-            }
-
-            const majorVersion = parseInt(version.split('.')[0], 10);
-            if (majorVersion < 2 || majorVersion > 3) {
-                console.error(`Unsupported Bind statistics version: ${version}`);
-                console.log('ZBX_NOTSUPPORTED');
-                process.exit(1);
-            }
-
-            j = {
-                zones: {},
-                counter: {},
-                zonemaintenancecounter: {},
-                resolvercounter: {},
-                socketcounter: {},
-                incounter: {},
-                outcounter: {},
-                cache: {},
-                memory: {},
-            };
-
-            if (majorVersion === 2) {
-                const views = root.isc.statistics[0].views[0].view;
-                for (const view of views) {
-                    if (view.name[0] === '_default') {
-                        for (const zone of view.zones[0].zone) {
-                            if (zone.counters) {
-                                const counters = {};
-                                for (const counter of zone.counters[0]) {
-                                    counters[counter.$.name] = counter._;
-                                }
-                                j.zones[zone.name[0]] = counters;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (majorVersion === 3) {
-                for (const child of root.statistics.server[0].counters) {
-                    if (child.$.type === 'nsstat') {
-                        for (const counter of child.counter) {
-                            j.counter[counter.$.name] = counter._;
-                        }
-                    }
-                }
-            }
-
-            fs.writeFileSync(JSONFILE, JSON.stringify(j));
-        }
-
-        // Ações
-        if (action === 'discoverzones') {
-            const data = { data: Object.keys(j.zones).map((zone) => ({ '{#ZONE}': zone })) };
-            console.log(JSON.stringify(data));
-        } else if (action === 'zonecounter') {
-            if (!zone || !counter) {
-                console.error('Missing argument');
-                console.log('ZBX_NOTSUPPORTED');
-                process.exit(1);
-            }
-            if (j.zones[zone] && j.zones[zone][counter]) {
-                console.log(j.zones[zone][counter]);
-            } else {
-                console.log('ZBX_NOTSUPPORTED');
-            }
-        } else {
-            if (!counter) {
-                console.error('Missing argument');
-                console.log('ZBX_NOTSUPPORTED');
-                process.exit(1);
-            }
-            if (j[action] && j[action][counter]) {
-                console.log(j[action][counter]);
-            } else {
-                console.log('ZBX_NOTSUPPORTED');
-            }
-        }
-    } catch (e) {
-        console.error(e.message);
-        console.log('ZBX_NOTSUPPORTED');
-        process.exit(1);
+    if (!cache) {
+        console.log("Cache não encontrado ou inválido");
+        return;
     }
-})();
+
+    if (args.action === 'discoverzones') {
+        const zones = cache.zones || {};
+        const discovery = {
+            data: Object.keys(zones).map(zone => ({ '{#ZONE}': zone }))
+        };
+        console.log(JSON.stringify(discovery));
+    } else if (args.action === 'zonecounter') {
+        if (!args.z || !args.c) {
+            console.log("Argumentos faltando: zone ou counter");
+            return;
+        }
+        const zone = cache.zones[args.z];
+        if (zone && zone[args.c]) {
+            console.log(zone[args.c]);
+        } else {
+            console.log("ZBX_NOTSUPPORTED");
+        }
+    } else {
+        console.log("Ação desconhecida");
+    }
+}
+
+main();
