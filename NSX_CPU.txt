@@ -1,6 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import sys
+import json
 
 # Verificar se todos os parâmetros foram passados
 if len(sys.argv) != 4:
@@ -75,30 +76,41 @@ def get_memory_metrics(node_id):
 response = requests.get(URL_NODES, auth=auth, headers=headers, verify=False)
 
 # Verifica resposta
+nodes_info = []
 if response.status_code == 200:
-    print("NSX-T Edge Nodes encontrados:")
     data = response.json()
     
     for node in data.get("results", []):
         if node.get("node_deployment_info", {}).get("resource_type") == "EdgeNode":
             node_name = node.get('display_name')
             node_id = node.get('id')
-            print(f"- Nome: {node_name}")
-            print(f"  ID: {node_id}")
-            print(f"  Estado: {node.get('host_switch_spec', {}).get('resource_type')}")
             
             # Obter as métricas
             network_traffic_rate, network_tx_rate, network_rx_rate, network_packets_drop = get_network_metrics(node_id)
             cpu_usage_rate = get_cpu_metrics(node_id)
             memory_usage_rate = get_memory_metrics(node_id)
             
-            # Exibir as métricas
-            print(f"  Network Traffic Rate: {network_traffic_rate}")
-            print(f"  Network TX Rate: {network_tx_rate}")
-            print(f"  Network RX Rate: {network_rx_rate}")
-            print(f"  Network Packets Drop: {network_packets_drop}")
-            print(f"  CPU Usage Rate: {cpu_usage_rate}")
-            print(f"  Memory Usage Rate: {memory_usage_rate}")
-            print("\n")
+            # Adicionar as informações em um dicionário para a saída em JSON
+            node_metrics = {
+                "name": node_name,
+                "id": node_id,
+                "network": {
+                    "traffic_rate": network_traffic_rate,
+                    "tx_rate": network_tx_rate,
+                    "rx_rate": network_rx_rate,
+                    "packets_drop": network_packets_drop
+                },
+                "cpu": {
+                    "usage_rate": cpu_usage_rate
+                },
+                "memory": {
+                    "usage_rate": memory_usage_rate
+                }
+            }
+            
+            nodes_info.append(node_metrics)
 else:
     print(f"Erro: {response.status_code} - {response.text}")
+
+# Exibir a saída em JSON
+print(json.dumps(nodes_info, indent=4))
