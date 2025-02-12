@@ -1,178 +1,37 @@
-https://github.com/Pesticles/Zabbix-Bind9-Statistics-Collection
+import requests
+from requests.auth import HTTPBasicAuth
 
+# Configurações
+NSX_MANAGER = "https://seu-nsx-manager"
+USERNAME = "admin"
+PASSWORD = "sua-senha"
 
+# Endpoint para listar os transport nodes (inclui Edge Nodes)
+URL = f"{NSX_MANAGER}/api/v1/transport-nodes"
 
+# Desativar warnings de SSL (caso não tenha um certificado válido)
+requests.packages.urllib3.disable_warnings()
 
+# Autenticação
+auth = HTTPBasicAuth(USERNAME, PASSWORD)
 
-
-https://portalgidesspr.net.bradesco.com.br:8443/sspr/private/login
-
-
-https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/net/checkpoint/quantum_ngfw_snmp/template_net_checkpoint_ngfw_snmp.yaml?at=release%2F7.0
-
-
-https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/net/huawei_snmp/template_net_huawei_snmp.yaml?at=release%2F7.0
-
-
-SELECT table_schema AS "Database",
-ROUND(SUM(data_length + index_length) / 1024 / 1024 / 1024, 2) AS "Size (GB)"
-FROM information_schema.tables
-GROUP BY table_schema;
-
-// O valor hexadecimal é passado como input para o script
-var hexValue = value;
-
-// Remove espaços e converte para uma única string contínua
-hexValue = hexValue.replace(/\s+/g, '');
-
-// Converte o valor hexadecimal para decimal
-var decimalValue = parseInt(hexValue, 16);
-
-// Converte para o formato de endereço IP
-var ip =
-  ((decimalValue >> 24) & 255) + "." +
-  ((decimalValue >> 16) & 255) + "." +
-  ((decimalValue >> 8) & 255) + "." +
-  (decimalValue & 255);
-
-return ip;
-
-
-
-SELECT COUNT(*) AS total_hosts
-FROM hosts
-WHERE status = 0;
-
-
-
-SET GLOBAL sql_slave_skip_counter = 1;
-
-
-mysqlbinlog --start-position=360932683 --stop-position=360933683 /path/to/mysql-bin.000114 > transacao.sql
-
-
-SELECT * FROM performance_schema.replication_applier_status_by_worker;
-
-
-DELETE h1
-FROM history_uint h1
-JOIN history_uint h2
-ON h1.itemid = h2.itemid
-AND h1.clock = h2.clock
-AND h1.ns = h2.ns
-AND h1.id > h2.id;  -- Supondo que 'id' seja uma coluna que pode ser usada para distinguir as entradas duplicadas
-
-
-SELECT eventid FROM zabbix.event_recovery
-WHERE eventid NOT IN (SELECT eventid FROM zabbix.events);
-
-
-mysqldump -u [usuario] -p[senha] --routines --triggers --events --single-transaction --quick --lock-tables=false zabbix > zabbix_full_backup.sql
-
-
-
-#MYSQL:
-replica_skip_errors = 1062,1032,1452,1517,1507,1396,1493
-
-#MariaDB:
-slave-skip-errors = 1062,1032,1452,1517,1507,1396,1493
-
-
-
-ps aux | grep zabbix | grep -v grep | awk '{print $2}' | xargs sudo kill -9
-
-
-
-SELECT 
-    h.host, 
-    i.name, 
-    i.key_, 
-    i.delay 
-FROM 
-    items i 
-JOIN 
-    hosts h ON i.hostid = h.hostid 
-WHERE 
-    CAST(i.delay AS UNSIGNED) = 30;
-
-
-grep -v '^ *#\|^$' /etc/zabbix/zabbix_server.conf
-
-
-
-8psSIDn7MGtu
-
-
-https://repo.zabbix.com/zabbix/7.0/rhel/9/x86_64/zabbix-server-mysql-7.0.4-release1.el9.x86_64.rpm
-
-
-
-
-// O JSON é recebido como o valor do item
-var jsonValue = value;
-
-// Faz o parse do JSON para um objeto JavaScript
-var data = JSON.parse(jsonValue);
-
-// Função para converter hexadecimal com espaços para endereço IP
-function hexToIp(hexValue) {
-    // Remove espaços
-    hexValue = hexValue.replace(/\s+/g, '');
-    // Converte para decimal
-    var decimalValue = parseInt(hexValue, 16);
-    // Formata como IP
-    return (
-        ((decimalValue >> 24) & 255) + "." +
-        ((decimalValue >> 16) & 255) + "." +
-        ((decimalValue >> 8) & 255) + "." +
-        (decimalValue & 255)
-    );
+# Cabeçalhos
+headers = {
+    "Accept": "application/json"
 }
 
-// Atualiza o campo {#SNMPVALUE} no JSON
-for (var i = 0; i < data.length; i++) {
-    if (data[i]["{#SNMPVALUE}"]) {
-        data[i]["{#SNMPVALUE}"] = hexToIp(data[i]["{#SNMPVALUE}"]);
-    }
-}
+# Requisição GET
+response = requests.get(URL, auth=auth, headers=headers, verify=False)
 
-// Retorna o JSON atualizado como string
-return JSON.stringify(data);
-
-
-
-
-
-
-
-
-// O JSON é recebido como o valor do item
-var jsonValue = value;
-
-// Faz o parse do JSON para um objeto JavaScript
-var data = JSON.parse(jsonValue);
-
-// Função para converter hexadecimal com espaços para endereço IPv6
-function hexToIPv6(hexValue) {
-    // Remove espaços e converte em grupos de 4 caracteres
-    var cleanHex = hexValue.trim().replace(/\s+/g, '');
-    var ipv6 = [];
-
-    for (var i = 0; i < cleanHex.length; i += 4) {
-        ipv6.push(cleanHex.substring(i, i + 4));
-    }
-
-    // Junta os grupos no formato IPv6
-    return ipv6.join(':');
-}
-
-// Atualiza o campo {#SNMPVALUE} no JSON
-for (var i = 0; i < data.length; i++) {
-    if (data[i]["{#SNMPVALUE}"]) {
-        data[i]["{#SNMPVALUE}"] = hexToIPv6(data[i]["{#SNMPVALUE}"]);
-    }
-}
-
-// Retorna o JSON atualizado como string
-return JSON.stringify(data);
-
+# Verifica resposta
+if response.status_code == 200:
+    print("NSX-T Edge Nodes encontrados:")
+    data = response.json()
+    
+    for node in data.get("results", []):
+        if node.get("node_deployment_info", {}).get("resource_type") == "EdgeNode":
+            print(f"- Nome: {node.get('display_name')}")
+            print(f"  ID: {node.get('id')}")
+            print(f"  Estado: {node.get('host_switch_spec', {}).get('resource_type')}\n")
+else:
+    print(f"Erro: {response.status_code} - {response.text}")
