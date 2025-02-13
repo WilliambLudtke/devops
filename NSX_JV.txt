@@ -1,66 +1,68 @@
-const fetch = require('node-fetch');
+var fetch = require('node-fetch');
 
 // Capturar os parâmetros passados pelo Zabbix
-const args = process.argv.slice(2);
+var args = process.argv.slice(2);
 
 if (args.length !== 3) {
     console.error("Erro: Parâmetros inválidos. Uso: script.js <usuario> <senha> <url>");
     process.exit(1);
 }
 
-const [USERNAME, PASSWORD, VRNI_MANAGER] = args;
+var USERNAME = args[0];
+var PASSWORD = args[1];
+var VRNI_MANAGER = args[2];
 
-const URL_LOGIN = `${VRNI_MANAGER}/api/v1/login`;
-const URL_NODES = `${VRNI_MANAGER}/api/ni/entities/nsxt-transport-nodes`;
+var URL_LOGIN = VRNI_MANAGER + '/api/v1/login';
+var URL_NODES = VRNI_MANAGER + '/api/ni/entities/nsxt-transport-nodes';
 
 async function authenticate() {
     try {
-        const response = await fetch(URL_LOGIN, {
+        var response = await fetch(URL_LOGIN, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: USERNAME, password: PASSWORD })
         });
 
         if (!response.ok) {
-            console.error(`Erro ao autenticar: ${response.status} - ${await response.text()}`);
+            console.error('Erro ao autenticar: ' + response.status + ' - ' + await response.text());
             process.exit(1);
         }
 
-        const data = await response.json();
+        var data = await response.json();
         return data.token;
     } catch (error) {
-        console.error(`Erro na autenticação: ${error.message}`);
+        console.error('Erro na autenticação: ' + error.message);
         process.exit(1);
     }
 }
 
 async function getTransportNodes(token) {
     try {
-        const response = await fetch(URL_NODES, {
+        var response = await fetch(URL_NODES, {
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': 'Bearer ' + token
             }
         });
 
         if (!response.ok) {
-            console.error(`Erro ao obter nodes: ${response.status} - ${await response.text()}`);
+            console.error('Erro ao obter nodes: ' + response.status + ' - ' + await response.text());
             process.exit(1);
         }
 
-        const data = await response.json();
+        var data = await response.json();
         return data.results || [];
     } catch (error) {
-        console.error(`Erro ao buscar nodes: ${error.message}`);
+        console.error('Erro ao buscar nodes: ' + error.message);
         process.exit(1);
     }
 }
 
-(async () => {
-    const token = await authenticate();
-    const nodes = await getTransportNodes(token);
+(async function() {
+    var token = await authenticate();
+    var nodes = await getTransportNodes(token);
 
-    nodes.forEach(node => {
-        console.log(`${node.name},${node.id}`);
+    nodes.forEach(function(node) {
+        console.log(node.name + ',' + node.id);
     });
 })();
