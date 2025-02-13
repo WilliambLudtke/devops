@@ -34,7 +34,7 @@ async function authenticate() {
         console.error('Erro na autenticação: ' + error.message);
         process.exit(1);
     }
-}
+} // <-- Verifique se este fechamento da função está correto
 
 async function getTransportNodes(token) {
     try {
