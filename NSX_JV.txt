@@ -34,7 +34,7 @@ async function authenticate() {
         console.error('Erro na autenticação: ' + error.message);
         process.exit(1);
     }
-} // <-- Verifique se este fechamento da função está correto
+} // <-- Certifique-se que essa chave de fechamento está no lugar certo
 
 async function getTransportNodes(token) {
     try {
@@ -59,10 +59,15 @@ async function getTransportNodes(token) {
 }
 
 (async function() {
-    var token = await authenticate();
-    var nodes = await getTransportNodes(token);
+    try {
+        var token = await authenticate();
+        var nodes = await getTransportNodes(token);
 
-    nodes.forEach(function(node) {
-        console.log(node.name + ',' + node.id);
-    });
+        nodes.forEach(function(node) {
+            console.log(node.name + ',' + node.id);
+        });
+    } catch (error) {
+        console.error('Erro no fluxo principal: ' + error.message);
+        process.exit(1);
+    }
 })();
