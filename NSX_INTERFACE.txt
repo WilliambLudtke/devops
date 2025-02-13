@@ -34,8 +34,10 @@ def get_network_metrics(node_id, interface_id):
     network_url = URL_NETWORK_METRICS.format(node_id=node_id, interface_id=interface_id)
     response = requests.get(network_url, auth=auth, headers=headers, verify=False)
     
+    print(f"URL de métricas de rede: {network_url}")  # Verificar a URL chamada
     if response.status_code == 200:
         network_data = response.json()
+        print(f"Resposta de rede: {network_data}")  # Verificar o conteúdo retornado
         
         # Pega as métricas de rede
         network_traffic_rate = network_data.get("trafficRate", "N/A")
@@ -51,18 +53,20 @@ def get_network_metrics(node_id, interface_id):
 # Requisição GET para os nodes
 response = requests.get(f"{NSX_MANAGER}/api/v1/transport-nodes", auth=auth, headers=headers, verify=False)
 
-# Verifica resposta
-nodes_info = []
+print(f"Status Code: {response.status_code}")  # Verificar o status da resposta
 if response.status_code == 200:
     data = response.json()
+    print(f"Resposta dos Nodes: {json.dumps(data, indent=4)}")  # Verificar os dados dos nodes
     
+    nodes_info = []
     for node in data.get("results", []):
         if node.get("node_deployment_info", {}).get("resource_type") == "EdgeNode":
             node_name = node.get('display_name')
             node_id = node.get('id')
             
-            # Obter interfaces do node
+            # Verificar as interfaces do node
             interfaces = node.get('interfaces', [])
+            print(f"Interfaces para o node {node_name}: {interfaces}")
             
             for interface in interfaces:
                 interface_id = interface.get('id')
