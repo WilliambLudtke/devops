@@ -1,59 +1,62 @@
-// Capturar os parâmetros passados pelo Zabbix
+// Capturar os parâmetros passados pela linha de comando
 var args = process.argv.slice(2);
 
 if (args.length !== 3) {
-    console.error("Erro: Parâmetros inválidos. Uso: script.js <usuario> <senha> <url>");
+    console.error("Erro: Parâmetros inválidos. Uso: node script.js <usuario> <senha> <url>");
     process.exit(1);
 }
 
 var USERNAME = args[0];
 var PASSWORD = args[1];
-var VRNI_MANAGER = args[2];
+var NSX_MANAGER = args[2];
 
-var URL_LOGIN = VRNI_MANAGER + '/api/v1/login';
-var URL_NODES = VRNI_MANAGER + '/api/ni/entities/nsxt-transport-nodes';
+var URL_NODES = NSX_MANAGER + '/api/v1/transport-nodes';
 
-function authenticate() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', URL_LOGIN, false);  // A requisição síncrona
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({ username: USERNAME, password: PASSWORD }));
+var https = require('https');
 
-    if (xhr.status !== 200) {
-        console.error('Erro ao autenticar: ' + xhr.status + ' - ' + xhr.responseText);
-        process.exit(1);
-    }
+function getTransportNodes() {
+    return new Promise((resolve, reject) => {
+        const options = {
+            method: 'GET',
+            auth: `${USERNAME}:${PASSWORD}`,
+            rejectUnauthorized: false
+        };
 
-    var data = JSON.parse(xhr.responseText);
-    return data.token;
-}
+        https.get(URL_NODES, options, (res) => {
+            let data = '';
 
-function getTransportNodes(token) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', URL_NODES, false);  // A requisição síncrona
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-    xhr.send();
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
 
-    if (xhr.status !== 200) {
-        console.error('Erro ao obter nodes: ' + xhr.status + ' - ' + xhr.responseText);
-        process.exit(1);
-    }
-
-    var data = JSON.parse(xhr.responseText);
-    return data.results || [];
-}
-
-function main() {
-    try {
-        var token = authenticate();
-        var nodes = getTransportNodes(token);
-
-        nodes.forEach(function(node) {
-            console.log(node.name + ',' + node.id);
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    try {
+                        const jsonData = JSON.parse(data);
+                        const nodes = jsonData.results.map(node => ({
+                            name: node.display_name,
+                            id: node.id
+                        }));
+                        resolve(nodes);
+                    } catch (error) {
+                        reject("Erro ao processar JSON: " + error.message);
+                    }
+                } else {
+                    reject(`Erro ao obter nodes: ${res.statusCode} - ${res.statusMessage}`);
+                }
+            });
+        }).on('error', (error) => {
+            reject("Erro na requisição: " + error.message);
         });
+    });
+}
+
+async function main() {
+    try {
+        const nodes = await getTransportNodes();
+        console.log(JSON.stringify(nodes, null, 4));
     } catch (error) {
-        console.error('Erro no fluxo principal: ' + error.message);
+        console.error(error);
         process.exit(1);
     }
 }
