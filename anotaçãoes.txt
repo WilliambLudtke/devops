@@ -1,0 +1,2 @@
+curl -k -u "username:password" -H "Accept: application/json" \
+"https://NSX_MANAGER/api/v1/metrics"
