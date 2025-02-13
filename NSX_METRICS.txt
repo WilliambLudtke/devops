@@ -29,7 +29,8 @@ login_data = {
 }
 
 # Fazer login e obter o token de autenticação
-response = requests.post(URL_LOGIN, headers=headers, data=json.dumps(login_data))
+response = requests.post(URL_LOGIN, headers=headers, data=json.dumps(login_data), verify=False)
+
 
 # Verificar a resposta do login
 if response.status_code == 200:
