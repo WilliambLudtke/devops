@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+
+import requests
+import json
+import sys
+
+# Verificar se todos os parâmetros foram passados
+if len(sys.argv) != 4:
+    print("Uso correto: python seu_script.py <vrni_username> <vrni_password> <vrni_manager>")
+    sys.exit(1)
+
+# Configurações (a partir dos parâmetros de linha de comando)
+USERNAME = sys.argv[1]
+PASSWORD = sys.argv[2]
+VRNI_MANAGER = sys.argv[3]
+
+# URL para o endpoint de autenticação
+URL_LOGIN = f"{VRNI_MANAGER}/api/v1/login"
+
+# Cabeçalhos para a autenticação
+headers = {
+    "Content-Type": "application/json"
+}
+
+# Corpo da requisição de login
+login_data = {
+    "username": USERNAME,
+    "password": PASSWORD
+}
+
+# Fazer login e obter o token de autenticação
+response = requests.post(URL_LOGIN, headers=headers, data=json.dumps(login_data))
+
+# Verificar a resposta do login
+if response.status_code == 200:
+    token = response.json().get("token")
+    print("Autenticado com sucesso!")
+else:
+    print(f"Erro ao autenticar: {response.status_code} - {response.text}")
+    sys.exit(1)
+
+# Adicionar o token nos cabeçalhos para as requisições subsequentes
+headers["Authorization"] = f"Bearer {token}"
+
+# URL para obter os NSX-T Transport Nodes
+URL_NSXT_TRANSPORT_NODES = f"{VRNI_MANAGER}/api/ni/entities/nsxt-transport-nodes"
+
+# Função para obter os NSX-T transport nodes
+def get_nsxt_transport_nodes():
+    response = requests.get(URL_NSXT_TRANSPORT_NODES, headers=headers)
+    
+    if response.status_code == 200:
+        nodes_data = response.json()
+        return nodes_data.get("results", [])
+    else:
+        print(f"Erro ao obter os NSX-T transport nodes: {response.status_code} - {response.text}")
+        return None
+
+# URL para obter as métricas de rede, CPU e memória
+URL_METRICS = f"{VRNI_MANAGER}/api/ni/metrics/v2"
+
+# Função para obter as métricas de rede, CPU e memória
+def get_metrics(node_id, interface_id):
+    params = {
+        "entity": "nsxt-transport-node",  # Pode ser ajustado conforme a entidade
+        "entity_id": node_id,  # ID do transport node
+        "metrics": "cpu,mem,network",  # Seleciona as métricas de CPU, Memória e Rede
+        "timeRange": "last_5m"  # Últimos 5 minutos (pode ser ajustado)
+    }
+    response = requests.get(URL_METRICS, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        metrics_data = response.json()
+        return metrics_data
+    else:
+        print(f"Erro ao obter métricas para o node {node_id}, interface {interface_id}: {response.status_code} - {response.text}")
+        return None
+
+# Função para obter as interfaces do transport node
+def get_interfaces(node_id):
+    interfaces_url = f"{VRNI_MANAGER}/api/ni/entities/nsxt-transport-nodes/{node_id}/interfaces"
+    response = requests.get(interfaces_url, headers=headers)
+    
+    if response.status_code == 200:
+        return response.json().get('results', [])
+    else:
+        print(f"Erro ao obter interfaces para o node {node_id}: {response.status_code} - {response.text}")
+        return []
+
+# Obter a lista de NSX-T transport nodes
+transport_nodes = get_nsxt_transport_nodes()
+
+# Criar estrutura para armazenar as informações completas dos nodes
+nodes_info = []
+
+if transport_nodes:
+    for node in transport_nodes:
+        node_name = node.get('name')
+        node_id = node.get('id')
+        
+        # Obter interfaces para cada node
+        interfaces = get_interfaces(node_id)
+
+        for interface in interfaces:
+            interface_id = interface.get('id')
+            interface_name = interface.get('name')
+
+            # Obter as métricas de rede, CPU e memória para esse transport node
+            metrics = get_metrics(node_id, interface_id)
+            
+            if metrics:
+                node_data = {
+                    "node_name": node_name,
+                    "node_id": node_id,
+                    "interface_name": interface_name,
+                    "interface_id": interface_id,
+                    "metrics": metrics
+                }
+                nodes_info.append(node_data)
+
+# Exibir as informações completas em formato JSON
+print(json.dumps(nodes_info, indent=4))
