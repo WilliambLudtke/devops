@@ -1,5 +1,3 @@
-var fetch = require('node-fetch');
-
 // Capturar os parâmetros passados pelo Zabbix
 var args = process.argv.slice(2);
 
@@ -16,64 +14,48 @@ var URL_LOGIN = VRNI_MANAGER + '/api/v1/login';
 var URL_NODES = VRNI_MANAGER + '/api/ni/entities/nsxt-transport-nodes';
 
 function authenticate() {
-    return fetch(URL_LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: USERNAME, password: PASSWORD })
-    })
-    .then(function(response) {
-        if (!response.ok) {
-            console.error('Erro ao autenticar: ' + response.status + ' - ' + response.statusText);
-            process.exit(1);
-        }
-        return response.json();
-    })
-    .then(function(data) {
-        return data.token;
-    })
-    .catch(function(error) {
-        console.error('Erro na autenticação: ' + error.message);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', URL_LOGIN, false);  // A requisição síncrona
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify({ username: USERNAME, password: PASSWORD }));
+
+    if (xhr.status !== 200) {
+        console.error('Erro ao autenticar: ' + xhr.status + ' - ' + xhr.responseText);
         process.exit(1);
-    });
+    }
+
+    var data = JSON.parse(xhr.responseText);
+    return data.token;
 }
 
 function getTransportNodes(token) {
-    return fetch(URL_NODES, {
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        }
-    })
-    .then(function(response) {
-        if (!response.ok) {
-            console.error('Erro ao obter nodes: ' + response.status + ' - ' + response.statusText);
-            process.exit(1);
-        }
-        return response.json();
-    })
-    .then(function(data) {
-        return data.results || [];
-    })
-    .catch(function(error) {
-        console.error('Erro ao buscar nodes: ' + error.message);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', URL_NODES, false);  // A requisição síncrona
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.send();
+
+    if (xhr.status !== 200) {
+        console.error('Erro ao obter nodes: ' + xhr.status + ' - ' + xhr.responseText);
         process.exit(1);
-    });
+    }
+
+    var data = JSON.parse(xhr.responseText);
+    return data.results || [];
 }
 
 function main() {
-    authenticate()
-        .then(function(token) {
-            return getTransportNodes(token);
-        })
-        .then(function(nodes) {
-            nodes.forEach(function(node) {
-                console.log(node.name + ',' + node.id);
-            });
-        })
-        .catch(function(error) {
-            console.error('Erro no fluxo principal: ' + error.message);
-            process.exit(1);
+    try {
+        var token = authenticate();
+        var nodes = getTransportNodes(token);
+
+        nodes.forEach(function(node) {
+            console.log(node.name + ',' + node.id);
         });
+    } catch (error) {
+        console.error('Erro no fluxo principal: ' + error.message);
+        process.exit(1);
+    }
 }
 
 main();
