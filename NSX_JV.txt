@@ -1,0 +1,54 @@
+const fetch = require('node-fetch');
+
+// Configurações
+const USERNAME = process.argv[2];
+const PASSWORD = process.argv[3];
+const VRNI_MANAGER = process.argv[4];
+const URL_LOGIN = `${VRNI_MANAGER}/api/v1/login`;
+
+// Função para autenticar e obter o token
+async function authenticate() {
+    const response = await fetch(URL_LOGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: USERNAME, password: PASSWORD })
+    });
+    
+    if (!response.ok) {
+        console.error(`Erro ao autenticar: ${response.status} - ${await response.text()}`);
+        process.exit(1);
+    }
+    
+    const data = await response.json();
+    return data.token;
+}
+
+// Função para obter os NSX-T transport nodes
+async function getTransportNodes(token) {
+    const URL_NSXT_TRANSPORT_NODES = `${VRNI_MANAGER}/api/ni/entities/nsxt-transport-nodes`;
+    const response = await fetch(URL_NSXT_TRANSPORT_NODES, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!response.ok) {
+        console.error(`Erro ao obter os NSX-T transport nodes: ${response.status} - ${await response.text()}`);
+        return [];
+    }
+    
+    const data = await response.json();
+    return data.results || [];
+}
+
+// Executar a autenticação e listar os nodes
+(async () => {
+    try {
+        const token = await authenticate();
+        const transportNodes = await getTransportNodes(token);
+        
+        const nodesList = transportNodes.map(node => ({ id: node.id, name: node.name }));
+        console.log(JSON.stringify(nodesList, null, 4));
+    } catch (error) {
+        console.error('Erro inesperado:', error);
+    }
+})();
