@@ -15,8 +15,11 @@ USERNAME = sys.argv[1]
 PASSWORD = sys.argv[2]
 NSX_MANAGER = sys.argv[3]
 
+# URL base para o endpoint de transport-nodes
+URL_TRANSPORT_NODES = f"{NSX_MANAGER}/api/v1/transport-nodes"
+
 # URL para o endpoint de métricas de rede por interface
-URL_NETWORK_METRICS = f"{NSX_MANAGER}/api/v1/transport-nodes/{{node_id}}/node/network/interfaces/{{interface_id}}/stats"
+URL_NETWORK_METRICS = f"{NSX_MANAGER}/api/v1/transport-nodes/{{node_id}}/network/interfaces/{{interface_id}}/stats?source=cached"
 
 # Desativar warnings de SSL (caso não tenha um certificado válido)
 requests.packages.urllib3.disable_warnings()
@@ -32,13 +35,12 @@ headers = {
 # Função para obter as métricas de rede por interface
 def get_network_metrics(node_id, interface_id):
     network_url = URL_NETWORK_METRICS.format(node_id=node_id, interface_id=interface_id)
+    print(f"Consultando métricas para URL: {network_url}")  # Depuração
     response = requests.get(network_url, auth=auth, headers=headers, verify=False)
     
-    print(f"URL de métricas de rede: {network_url}")  # Verificar a URL chamada
     if response.status_code == 200:
         network_data = response.json()
-        print(f"Resposta de rede: {network_data}")  # Verificar o conteúdo retornado
-        
+        print(f"Resposta de métricas: {json.dumps(network_data, indent=4)}")  # Depuração
         # Pega as métricas de rede
         network_traffic_rate = network_data.get("trafficRate", "N/A")
         network_tx_rate = network_data.get("txRate", "N/A")
@@ -48,11 +50,11 @@ def get_network_metrics(node_id, interface_id):
         return network_traffic_rate, network_tx_rate, network_rx_rate, network_packets_drop
     else:
         print(f"Erro ao obter dados de rede para o node {node_id}, interface {interface_id}: {response.status_code}")
+        print(f"Erro: {response.text}")  # Depuração
         return None, None, None, None
 
 # Requisição GET para os nodes
-response = requests.get(f"{NSX_MANAGER}/api/v1/transport-nodes", auth=auth, headers=headers, verify=False)
-
+response = requests.get(URL_TRANSPORT_NODES, auth=auth, headers=headers, verify=False)
 print(f"Status Code: {response.status_code}")  # Verificar o status da resposta
 if response.status_code == 200:
     data = response.json()
@@ -60,16 +62,19 @@ if response.status_code == 200:
     
     nodes_info = []
     for node in data.get("results", []):
-        if node.get("node_deployment_info", {}).get("resource_type") == "EdgeNode":
-            node_name = node.get('display_name')
-            node_id = node.get('id')
-            
-            # Verificar as interfaces do node
-            interfaces = node.get('interfaces', [])
-            print(f"Interfaces para o node {node_name}: {interfaces}")
-            
+        node_name = node.get('display_name')
+        node_id = node.get('id')
+        
+        print(f"Node: {node_name} ({node_id})")
+        
+        # Verificar se o node possui interfaces
+        interfaces = node.get('interfaces', [])
+        if not interfaces:
+            print(f"Nenhuma interface encontrada para o node {node_name}")
+        else:
             for interface in interfaces:
                 interface_id = interface.get('id')
+                print(f"Consultando interface ID: {interface_id}")
                 # Obter as métricas de rede para cada interface
                 network_traffic_rate, network_tx_rate, network_rx_rate, network_packets_drop = get_network_metrics(node_id, interface_id)
                 
